@@ -29,6 +29,11 @@ cd peakflo-takehome-test
 ```bash
 python3 main.py
 ```
+4. Optionally, you can specify a different CSV file using the `--filepath` argument:
+```bash
+python3 main.py --filepath=path_to_your_input_file.csv
+```
+Replace `path_to_your_input_file.csv` with the actual path to your desired CSV file. If no filepath is provided, the default `target.csv` will be used.
 
 ## Usage
 Run the `main.py` script to calculate the fare from a sample CSV file. If all tests pass, the total fare will be printed to the console. If any test fails, the corresponding error message will be displayed.

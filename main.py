@@ -1,5 +1,6 @@
 import csv
 import subprocess
+import argparse
 from datetime import datetime
 from fare_system import UserJourneyTracker, FareCalculator
 
@@ -30,10 +31,15 @@ def read_csv_and_calculate_fare(file_path):
     return total_fare
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calculate fare from a given CSV file.")
+    parser.add_argument('--filepath', type=str, default='target.csv',
+                        help='Path to the input CSV file')
+    args = parser.parse_args()
+    
     result = subprocess.run(['python3', '-m', 'unittest', 'test.py'], capture_output=True)
     
     if result.returncode == 0:
-        print(f"Total Fare: ${read_csv_and_calculate_fare('target.csv')}")
+        print(f"Total Fare: ${read_csv_and_calculate_fare(args.filepath)}")
     else:
         print("Tests failed. Please fix the issues before running the main logic.")
         print(result.stdout.decode('utf-8'))

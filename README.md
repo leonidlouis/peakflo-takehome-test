@@ -45,3 +45,9 @@ You can run unit tests independently with:
 ```bash
 python3 test.py
 ```
+### Note
+I've provided 2 extra CSV file for simulation / test purposes:
+- `simulate_2_week_cap_restart_115.csv`
+- `simulate_multiple_day_rollover_298.csv`
+  
+you can run them using the `--filepath` argument, expected return value is at the end of the filename (`115` and `298`)

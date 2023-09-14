@@ -1,73 +1,71 @@
+import logging
+from collections import defaultdict
 from datetime import datetime, timedelta
+from constants import DATE_FORMAT, TIME_FORMAT
 
-class PeakHours:
-    _weekdays = [('08:00', '10:00'), ('16:30', '19:00')]
-    _saturdays = [('10:00', '14:00'), ('18:00', '23:00')]
-    _sundays = [('18:00', '23:00')]
 
-    @classmethod
-    def is_peak(cls, date_time):
-        dt_obj = datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%S")
-        weekday = dt_obj.weekday()
+# Setting up logging for the module
+logger = logging.getLogger(__name__)
 
-        if 0 <= weekday < 5:  # Monday to Friday
-            time_periods = cls._weekdays
-        elif weekday == 5:  # Saturday
-            time_periods = cls._saturdays
-        else:  # Sunday
-            time_periods = cls._sundays
+class PeakHoursChecker:
+    """Check if a given datetime is during peak hours."""
+    
+    def __init__(self, peak_hours_config):
+        self.peak_hours = peak_hours_config
 
+    def is_peak(self, date_time):
+        dt_obj = datetime.strptime(date_time, DATE_FORMAT)
+        weekday = dt_obj.strftime('%A').lower()
+        time_periods = self.peak_hours.get(weekday, [])
+        
         for start, end in time_periods:
-            if start <= dt_obj.strftime('%H:%M') <= end:
+            if start <= dt_obj.strftime(TIME_FORMAT) <= end:
+                logger.debug(f"{date_time} falls under peak hours.")
                 return True
+
+        logger.debug(f"{date_time} does not fall under peak hours.")
         return False
 
 
 class FareCalculator:
-    _fare_chart = {
-        ('Green', 'Green'): {'Peak': 2, 'Non-Peak': 1},
-        ('Red', 'Red'): {'Peak': 3, 'Non-Peak': 2},
-        ('Green', 'Red'): {'Peak': 4, 'Non-Peak': 3},
-        ('Red', 'Green'): {'Peak': 3, 'Non-Peak': 2}
-    }
+    """Calculate the base fare based on journey details."""
 
-    _cap_chart = {
-        ('Green', 'Green'): {'Daily': 8, 'Weekly': 55},
-        ('Red', 'Red'): {'Daily': 12, 'Weekly': 70},
-        ('Green', 'Red'): {'Daily': 15, 'Weekly': 90},
-        ('Red', 'Green'): {'Daily': 15, 'Weekly': 90}
-    }
+    def __init__(self, peak_hours_checker, fare_chart_config):
+        self.peak_hours_checker = peak_hours_checker
+        self._fare_chart = fare_chart_config
 
-    @staticmethod
-    def calculate_base_fare(from_line, to_line, date_time):
-        if PeakHours.is_peak(date_time):
-            return FareCalculator._fare_chart[(from_line, to_line)]['Peak']
-        else:
-            return FareCalculator._fare_chart[(from_line, to_line)]['Non-Peak']
+    def get_base_fare(self, from_line, to_line, date_time):
+        line_key = f"{from_line},{to_line}"
+        fare_type = "peak" if self.peak_hours_checker.is_peak(date_time) else "non_peak"
+        fare_value = self._fare_chart[line_key][fare_type]
+        logger.debug(f"Base fare from {from_line} to {to_line} during {fare_type} time: ${fare_value}.")
+        return fare_value
 
-    @classmethod
-    def apply_daily_cap(cls, from_line, to_line, accumulated_daily_fare):
-        return min(accumulated_daily_fare, cls._cap_chart[(from_line, to_line)]['Daily'])
+class FareCap:
+    """Handle fare caps based on daily and weekly limits."""
 
-    @classmethod
-    def apply_weekly_cap(cls, from_line, to_line, accumulated_weekly_fare):
-        return min(accumulated_weekly_fare, cls._cap_chart[(from_line, to_line)]['Weekly'])
-    
+    def __init__(self, cap_chart_config):
+        self._cap_chart = cap_chart_config
+
+    def apply_daily_cap(self, from_line, to_line, accumulated_daily_fare):
+        cap = self._cap_chart[f"{from_line},{to_line}"]['daily']
+        logger.debug(f"Applying daily cap of ${cap} for {from_line} to {to_line}.")
+        return min(accumulated_daily_fare, cap)
+
+    def apply_weekly_cap(self, from_line, to_line, accumulated_weekly_fare):
+        cap = self._cap_chart[f"{from_line},{to_line}"]['weekly']
+        logger.debug(f"Applying weekly cap of ${cap} for {from_line} to {to_line}.")
+        return min(accumulated_weekly_fare, cap)
+
 
 class UserJourneyTracker:
-    def __init__(self):
-        self._daily_fares = {
-            ('Green', 'Green'): 0,
-            ('Red', 'Red'): 0,
-            ('Green', 'Red'): 0,
-            ('Red', 'Green'): 0
-        }
-        self._weekly_fares = {
-            ('Green', 'Green'): 0,
-            ('Red', 'Red'): 0,
-            ('Green', 'Red'): 0,
-            ('Red', 'Green'): 0
-        }
+    """Track user journeys and calculate fares."""
+
+    def __init__(self, fare_calculator, fare_cap):
+        self.fare_calculator = fare_calculator
+        self.fare_cap = fare_cap
+        self._daily_fares = defaultdict(int)
+        self._weekly_fares = defaultdict(int)
         self._last_journey_date = None
         self._week_start_date = None
 
@@ -82,34 +80,50 @@ class UserJourneyTracker:
     def _reset_fares_if_needed(self, current_date):
         # Check if a new week has started
         if self._week_start_date is None or (current_date - self._week_start_date) >= timedelta(days=7):
+            logger.debug(f"Resetting fares for the week starting {self._week_start_date}.")
             self._reset_weekly_fares()
             self._week_start_date = current_date
 
         # Check if a new day has begun
         if self._last_journey_date is not None and self._last_journey_date != current_date:
+            logger.debug(f"Resetting daily fares for {self._last_journey_date}.")
             self._reset_daily_fares()
 
         self._last_journey_date = current_date
 
-    def add_journey(self, from_line, to_line, base_fare, date):
-        # Parse date
-        journey_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").date()
-
+    def add_journey(self, from_line, to_line, date_time):
+        logger.debug(f"=================================== Start Add New Journey Entry")
+        journey_date = datetime.strptime(date_time, DATE_FORMAT).date()
         self._reset_fares_if_needed(journey_date)
 
-        # Calculate cumulative daily and weekly fare for the specific line combination + base fare
+        # Calculate base fare
+        base_fare = self.fare_calculator.get_base_fare(from_line, to_line, date_time)
+
+        # Calculate accumulated fares with the current journey
+        logger.debug(f"Prev accumulated daily fare for journey from {from_line} to {to_line} is ${self._daily_fares[(from_line, to_line)]}.")
+        logger.debug(f"Prev accumulated weekly fare for journey from {from_line} to {to_line} is ${self._weekly_fares[(from_line, to_line)]}.")
         accumulated_daily_fare = self._daily_fares[(from_line, to_line)] + base_fare
         accumulated_weekly_fare = self._weekly_fares[(from_line, to_line)] + base_fare
 
-        capped_daily_fare = FareCalculator.apply_daily_cap(from_line, to_line, accumulated_daily_fare)
-        capped_weekly_fare = FareCalculator.apply_weekly_cap(from_line, to_line, accumulated_weekly_fare)
+        # Apply caps
+        capped_daily_fare = self.fare_cap.apply_daily_cap(from_line, to_line, accumulated_daily_fare)
+        capped_weekly_fare = self.fare_cap.apply_weekly_cap(from_line, to_line, accumulated_weekly_fare)
 
-        # Determine the fare that can be charged for this journey considering both daily and weekly caps
-        fare_to_charge = min(base_fare, capped_daily_fare - self._daily_fares[(from_line, to_line)], capped_weekly_fare - self._weekly_fares[(from_line, to_line)])
+        # Determine the fare to charge for this journey
+        fare_to_charge = min(
+            base_fare,
+            capped_daily_fare - self._daily_fares[(from_line, to_line)],
+            capped_weekly_fare - self._weekly_fares[(from_line, to_line)]
+        )
 
-        # Update the accumulated fares after charging for this journey
+        # Update accumulated fares
         self._daily_fares[(from_line, to_line)] += fare_to_charge
         self._weekly_fares[(from_line, to_line)] += fare_to_charge
+
+        logger.debug(f"Accumulated daily fare for journey from {from_line} to {to_line} is ${self._daily_fares[(from_line, to_line)]}.")
+        logger.debug(f"Accumulated weekly fare for journey from {from_line} to {to_line} is ${self._weekly_fares[(from_line, to_line)]}.")
+        logger.debug(f"Fare to charge for journey from {from_line} to {to_line} is ${fare_to_charge}.")
+        logger.debug(f"=================================== Finish New Journey Entry")
 
         return fare_to_charge
     

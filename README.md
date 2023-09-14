@@ -1,4 +1,6 @@
-# Fare System
+# Fare System  
+
+[![codecov](https://codecov.io/gh/leonidlouis/peakflo-takehome-test/graph/badge.svg?token=MG8HW9T51W)](https://codecov.io/gh/leonidlouis/peakflo-takehome-test)
 
 A fare calculation system for a fictional public transportation network.
 
@@ -41,7 +43,7 @@ source .venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-6. Set up `pre-commit` hooks
+6. Set up `pre-commit` hooks *(optional, not needed if you're not going to contribute to the repo)*
 ```bash
 pre-commit install
 ```
@@ -90,6 +92,8 @@ Sample output when using the application:
 ![Image of output of application](assets/sample-result-from-app.png)
 
 ## Tests
+[Click Here](https://app.codecov.io/gh/leonidlouis/peakflo-takehome-test) to see the latest coverage report.
+
 Unit & integration tests are provided in `tests` directory. Whenever `main.py` is called through the command line, it will first execute these tests before calculating the fare. Application will exit if there's an error in the test.
 ### Running Tests Separately
 You can run unit tests independently with:

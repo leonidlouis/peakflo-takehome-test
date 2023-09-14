@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  test:
+  generate_coverage_report:
     runs-on: ubuntu-latest
 
     steps:

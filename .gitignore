@@ -3,3 +3,11 @@ logs/
 config.json
 /data/
 !tests/data/
+
+# Virtual environment
+myenv/
+venv/
+*.venv/
+
+# Coverage data file
+.coverage

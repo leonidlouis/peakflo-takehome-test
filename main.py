@@ -32,7 +32,7 @@ def read_csv(file_path, valid_line_combinations):
             header = next(csv_reader)  # Extract header
 
             if header != ['from_line', 'to_line', 'date_time']:
-                logging.error("Unexpected CSV header format.")
+                logging.critical("Unexpected CSV header format.")
                 raise ValueError("Unexpected CSV header format.")
 
             journeys = list(csv_reader)
@@ -41,10 +41,10 @@ def read_csv(file_path, valid_line_combinations):
             logging.info(f"Successfully read and validated {len(journeys)} journeys from {file_path}.")
             return journeys
     except FileNotFoundError:
-        logging.error(f"CSV file {file_path} not found.")
+        logging.critical(f"CSV file {file_path} not found.")
         raise
     except csv.Error as e:
-        logging.error(f"Error reading CSV file {file_path} at line {csv_reader.line_num}: {e}")
+        logging.critical(f"Error reading CSV file {file_path} at line {csv_reader.line_num}: {e}")
         raise
 
 def calculate_user_total_fare(config, journeys):
@@ -62,7 +62,7 @@ def calculate_user_total_fare(config, journeys):
 
     for journey in journeys:
         if len(journey) != 3:
-            logging.error("Malformed CSV data detected.")
+            logging.critical("Malformed CSV data detected.")
             raise ValueError("Unexpected CSV header format.")
 
         from_line, to_line, date_time = journey
@@ -80,8 +80,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Calculate fare from a given CSV file.")
     parser.add_argument('--filepath', type=str, default='data/target.csv',
                         help='Path to the input CSV file')
-    parser.add_argument('--log-level', type=str, default='INFO',
-                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+    parser.add_argument('--log-level', type=str, default='CRITICAL',
+                        choices=['DEBUG', 'INFO', 'NONE', 'CRITICAL'],
                         help='Set the logging level')
     parser.add_argument('--config-filepath', type=str, default='config.json',
                         help='Path to the configuration file')
@@ -91,6 +91,10 @@ def parse_args():
 
 def configure_log(log_level):
     """Configure logging for application, level and behaviour is modifiable by user args"""
+    if log_level == "NONE":
+        logging.disable(logging.CRITICAL+1)  # Disable all logging
+        return
+    
     numeric_log_level = getattr(logging, log_level.upper(), None)
     if not isinstance(numeric_log_level, int):
         raise ValueError(f"Invalid log level: {log_level}")
@@ -137,7 +141,7 @@ def main():
         total_fare = calculate_user_total_fare(config, user_journey)
         print(f"Total Fare: ${total_fare}")
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
+        logging.critical(f"An error occurred: {str(e)}")
         exit(1)
 
 if __name__ == "__main__":

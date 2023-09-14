@@ -47,7 +47,7 @@ class TestIntegration(unittest.TestCase):
     def test_run_main_script(self):
         for test_case in self.test_cases:
             with self.subTest(test_case["name"]):
-                command = ["python3", "main.py", "--config-filepath=tests/test_config.json", f"--filepath={test_case['filepath']}", "--skip-tests", "--log-level=ERROR"]
+                command = ["python3", "main.py", "--config-filepath=tests/test_config.json", f"--filepath={test_case['filepath']}", "--skip-tests", "--log-level=CRITICAL"]
                 self.run_script_and_assert(
                     command,
                     expected_result=test_case.get("expected_result"),

@@ -12,8 +12,11 @@ A fare calculation system for a fictional public transportation network.
 ## Getting Started
 
 ### Prerequisites
+Before running the program:
 
-- Python 3.x
+- Python 3.x installed
+- Set up your `config.json` first, an example configuration is provided in the repository as reference (`config.json.example`)
+- Replace placeholder `target.csv` file in the `data` directory with your actual journey data. (by default, this is what the program will use, unless you explicitly call the `--filepath` argument)
 
 ### Installation
 
@@ -29,25 +32,42 @@ cd peakflo-takehome-test
 ```bash
 python3 main.py
 ```
-4. Optionally, you can specify a different CSV file using the `--filepath` argument:
-```bash
-python3 main.py --filepath=path_to_your_input_file.csv
-```
-Replace `path_to_your_input_file.csv` with the actual path to your desired CSV file. If no filepath is provided, the default `target.csv` will be used.
+### Command Line Arguments
+The application supports a range of arguments for flexibility:
+- `--filepath`: Specify a path to your input CSV file (default: `data/target.csv`).
+- `--log-level`: Set the logging level. Options are: `DEBUG`, `INFO`, `NONE`, and `CRITICAL`
+  - `CRITICAL`(default): This will write to the console only application-breaking logs.
+  - `INFO`: This will write to the console basic information regarding the application.
+  - `NONE`: This will not write anything, anywhere, and suppress logging.
+  - `DEBUG`: This will write to the console and logfile in `logs` directory highly granular/detailed information regarding the application.
+- `--config-filepath`: Specify a path to the configuration file (default: `config.json`).
+- `--skip-tests`: Use this flag to skip running tests, not intended to be used, originally for `tests/test_integration.py`.
 
 ## Usage
-Run the `main.py` script to calculate the fare from a sample CSV file. If all tests pass, the total fare will be printed to the console. If any test fails, the corresponding error message will be displayed.
+Run the `main.py` script with the appropriate command line arguments.
+Some examples:
 
+1. Running script to calculate default file: `data/target.csv` with `config.json`
+```bash
+python3 main.py
+```
+2. Running script to calculate custom user file: `data/custom_user_file.csv` with `config.json`
+```bash
+python3 main.py --filepath=data/custom_user_file.csv
+```
+3. Running script to calculate custom user file: `data/custom_user_file.csv` with `custom_line_config.json`
+```bash
+python3 main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json
+```
+4. Running script to calculate custom user file: `data/custom_user_file.csv` with `custom_line_config.json` with granular/detailed logs (log will be outputted to `logs` directory)
+```bash
+python3 main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json --log-level=DEBUG
+```
 ## Tests
-Unit tests are provided in `test.py`. The main logic (`main.py`) will first execute these tests before calculating the fare. Ensure all tests are passing to get a valid fare calculation.
+Unit & integration tests are provided in `tests` directory. Whenever `main.py` is called through the command line, it will first execute these tests before calculating the fare. Application will exit if there's an error in the test.
 ### Running Tests Separately
 You can run unit tests independently with:
 ```bash
-python3 test.py
+python3 -m unittest discover -q tests
 ```
-### Note
-I've provided 2 extra CSV file for simulation / test purposes:
-- `simulate_2_week_cap_restart_115.csv`
-- `simulate_multiple_day_rollover_298.csv`
-  
-you can run them using the `--filepath` argument, expected return value is at the end of the filename (`115` and `298`)
+please note that currently, the tests are successful, but some of the `CRITICAL` outputs cannot be suppressed. (TODO)

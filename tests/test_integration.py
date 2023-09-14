@@ -13,17 +13,17 @@ class TestIntegration(unittest.TestCase):
     test_cases = [
         {
             "name": "simulate 2 week cap restart",
-            "filepath": "data/simulate_2_week_cap_restart_115.csv",
+            "filepath": "tests/data/simulate_2_week_cap_restart_115.csv",
             "expected_result": "Total Fare: $115"
         },
         {
             "name": "simulate 2 day cap restart",
-            "filepath": "data/simulate_2_day_cap_restart_13.csv",
+            "filepath": "tests/data/simulate_2_day_cap_restart_13.csv",
             "expected_result": "Total Fare: $13"
         },
         {
             "name": "simulate multiple day cap restart",
-            "filepath": "data/simulate_multiple_day_cap_restart_298.csv",
+            "filepath": "tests/data/simulate_multiple_day_cap_restart_298.csv",
             "expected_result": "Total Fare: $298"
         },
         {

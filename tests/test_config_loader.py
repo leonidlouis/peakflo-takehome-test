@@ -375,6 +375,96 @@ class TestConfigLoader(unittest.TestCase):
         with self.assertRaises(InvalidStructureError):
             config_loader._validate_config(invalid_values_charts)
 
+    def test_invalid_line_to_line_combinations(self):
+        missing_combination_config = {
+            "peak_hours": {
+                "monday": [["08:00", "10:00"]],
+            },
+            "fare_chart": {
+                "green,green": {"peak": 2, "non_peak": 1},
+            },
+            "cap_chart": {
+                "green,green": {"daily": 8, "weekly": 55},
+                "red,red": {"daily": 12, "weekly": 70},
+            },
+        }
+
+        config_loader = ConfigLoader()
+
+        # Test missing combination in fare_chart
+        with self.assertRaises(InvalidLineToLineCombinationError):
+            config_loader._validate_config(missing_combination_config)
+
+        missing_combination_config = {
+            "peak_hours": {
+                "monday": [["08:00", "10:00"]],
+            },
+            "fare_chart": {
+                "green,green": {"peak": 2, "non_peak": 1},
+                "red,red": {"peak": 3, "non_peak": 2},
+            },
+            "cap_chart": {
+                "green,green": {"daily": 8, "weekly": 55},
+            },
+        }
+
+        # Test missing combination in cap_chart
+        with self.assertRaises(InvalidLineToLineCombinationError):
+            config_loader._validate_config(missing_combination_config)
+
+    def test_validate_chart_structure(self):
+        config_loader = ConfigLoader()
+
+        # Valid fare_chart structure
+        valid_fare_chart = {
+            "green,green": {"peak": 2, "non_peak": 1},
+            "red,red": {"peak": 3, "non_peak": 2},
+        }
+        config_data = {
+            "fare_chart": valid_fare_chart,
+            "peak_hours": {},
+        }
+        config_loader._validate_chart_structure(
+            config_data, "fare_chart", {"peak", "non_peak"}
+        )
+
+        # Missing keys in fare_chart
+        invalid_fare_chart_missing_keys = {
+            "green,green": {"peak": 2},
+            "red,red": {"peak": 3, "non_peak": 2},
+        }
+        config_data["fare_chart"] = invalid_fare_chart_missing_keys
+        with self.assertRaises(InvalidStructureError):
+            config_loader._validate_chart_structure(
+                config_data, "fare_chart", {"peak", "non_peak"}
+            )
+
+        # Extra keys in fare_chart
+        invalid_fare_chart_extra_keys = {
+            "green,green": {"peak": 2, "non_peak": 1, "extra_key": 42},
+            "red,red": {"peak": 3, "non_peak": 2},
+        }
+        config_data["fare_chart"] = invalid_fare_chart_extra_keys
+        with self.assertRaises(InvalidStructureError):
+            config_loader._validate_chart_structure(
+                config_data, "fare_chart", {"peak", "non_peak"}
+            )
+
+        # Empty fare_chart
+        empty_fare_chart = {}
+        config_data["fare_chart"] = empty_fare_chart
+        with self.assertRaises(InvalidStructureError):
+            config_loader._validate_chart_structure(
+                config_data, "fare_chart", {"peak", "non_peak"}
+            )
+
+        # Missing fare_chart
+        del config_data["fare_chart"]
+        with self.assertRaises(InvalidStructureError):
+            config_loader._validate_chart_structure(
+                config_data, "fare_chart", {"peak", "non_peak"}
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

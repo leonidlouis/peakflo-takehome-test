@@ -68,10 +68,6 @@ def calculate_user_total_fare(config, journeys):
     journeys.sort(key=lambda x: datetime.strptime(x[2], DATE_FORMAT))
 
     for journey in journeys:
-        if len(journey) != 3:
-            logging.critical("Malformed CSV data detected.")
-            raise ValueError("Unexpected CSV header format.")
-
         from_line, to_line, date_time = journey
         from_line = from_line.lower()
         to_line = to_line.lower()

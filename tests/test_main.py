@@ -1,10 +1,17 @@
 import unittest
+import logging
 import os
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 import main
 
 
 class TestMainScript(unittest.TestCase):
+    def setUp(self):
+        # Clear handlers before every test
+        for handler in logging.getLogger().handlers[:]:
+            logging.getLogger().removeHandler(handler)
+        logging.disable(logging.NOTSET)  # Re-enable logging
+
     @patch("argparse.ArgumentParser.parse_args")
     def test_parse_args(self, mock_parse_args):
         # Set up the mock behavior for parse_args
@@ -130,6 +137,82 @@ class TestMainScript(unittest.TestCase):
         # Ensure a FileNotFoundError is raised for a non-existent file
         with self.assertRaises(FileNotFoundError) as context:
             main.read_csv(file_path, valid_line_combinations)
+
+    def test_calculate_user_total_fare_valid(self):
+        config = {
+            "peak_hours": {
+                "monday": [["08:00", "10:00"], ["16:30", "19:00"]],
+                "tuesday": [["08:00", "10:00"], ["16:30", "19:00"]],
+                "wednesday": [["08:00", "10:00"], ["16:30", "19:00"]],
+                "thursday": [["08:00", "10:00"], ["16:30", "19:00"]],
+                "friday": [["08:00", "10:00"], ["16:30", "19:00"]],
+                "saturday": [["10:00", "14:00"], ["18:00", "23:00"]],
+                "sunday": [["18:00", "23:00"]],
+            },
+            "fare_chart": {
+                "green,green": {"peak": 2, "non_peak": 1},
+                "red,red": {"peak": 3, "non_peak": 2},
+                "green,red": {"peak": 4, "non_peak": 3},
+                "red,green": {"peak": 3, "non_peak": 2},
+            },
+            "cap_chart": {
+                "green,green": {"daily": 8, "weekly": 55},
+                "red,red": {"daily": 12, "weekly": 70},
+                "green,red": {"daily": 15, "weekly": 90},
+                "red,green": {"daily": 15, "weekly": 90},
+            },
+        }
+
+        journeys = [
+            ["green", "green", "2023-09-14T08:30:00"],  # peak hour
+            ["green", "red", "2023-09-14T12:00:00"],  # non-peak hour
+            ["red", "green", "2023-09-14T19:30:00"],  # non-peak hour
+            ["red", "red", "2023-09-14T19:45:00"],  # non-peak hour
+        ]
+
+        expected_fare = (
+            config["fare_chart"]["green,green"]["peak"]
+            + config["fare_chart"]["green,red"]["non_peak"]
+            + config["fare_chart"]["red,green"]["non_peak"]
+            + config["fare_chart"]["red,red"]["non_peak"]
+        )
+
+        with patch.object(main.logging, "info"), patch.object(main.logging, "critical"):
+            total_fare = main.calculate_user_total_fare(config, journeys)
+
+        self.assertEqual(total_fare, expected_fare)
+
+    def test_log_level_none(self):
+        main.configure_log("NONE")
+        with self.assertRaises(
+            AssertionError
+        ):  # Because if `logging` is properly disabled, calling self.assertLogs will throw an AssertionError
+            with self.assertLogs() as cm:
+                logging.critical("This log should not appear.")
+
+    def test_invalid_log_level(self):
+        with self.assertRaises(ValueError):
+            main.configure_log("INVALID_LOG_LEVEL")
+
+    def test_debug_log_file_creation(self):
+        m = mock_open()
+        with patch("builtins.open", m), patch("os.makedirs", return_value=None):
+            main.configure_log("DEBUG")
+            m.assert_called_once()  # Ensure that the log file was created
+
+    def test_log_level_control(self):
+        main.configure_log("WARNING")
+        with self.assertLogs(level="WARNING") as cm:
+            logging.debug("This debug log should not appear.")
+            logging.warning("This warning log should appear.")
+            logging.error("This error log should appear.")
+        self.assertEqual(len(cm.records), 2)
+        self.assertIn(
+            "This warning log should appear.", [rec.message for rec in cm.records]
+        )
+        self.assertIn(
+            "This error log should appear.", [rec.message for rec in cm.records]
+        )
 
 
 if __name__ == "__main__":

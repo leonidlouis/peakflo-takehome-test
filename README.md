@@ -63,6 +63,9 @@ python3 main.py --filepath=data/custom_user_file.csv --config-filepath=custom_li
 ```bash
 python3 main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json --log-level=DEBUG
 ```
+
+Sample output when using the application:
+![Image of output of application](assets/image-2.png)
 ## Tests
 Unit & integration tests are provided in `tests` directory. Whenever `main.py` is called through the command line, it will first execute these tests before calculating the fare. Application will exit if there's an error in the test.
 ### Running Tests Separately
@@ -70,4 +73,11 @@ You can run unit tests independently with:
 ```bash
 python3 -m unittest discover -q tests
 ```
-please note that currently, the tests are successful, but some of the `CRITICAL` outputs cannot be suppressed. (TODO)
+please note that currently, all tests are successful, but some of the `CRITICAL` outputs when Negative Testing/Failure Testing cannot be suppressed/silenced. (see below) (TODO)
+
+![Image of `CRITICAL` printouts that's not suppressed](assets/image-1.png)
+
+## Production Application
+While this repo should already fulfill the initial requirement for the take home test, I've designed a super simple ERD below as a reference to what an actual (albeit simplified) Fare Calculation System for Singa Metro Authority could look like.
+
+![Image of fictional / reference database design for an actual Fare Calculation System](assets/image.png)

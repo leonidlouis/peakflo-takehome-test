@@ -1,12 +1,18 @@
 import unittest
 from unittest.mock import patch, mock_open
-from config_loader import ConfigLoader, InvalidStructureError, InvalidLineToLineCombinationError
+from config_loader import (
+    ConfigLoader,
+    InvalidStructureError,
+    InvalidLineToLineCombinationError,
+)
 import json
 
-class TestConfigLoader(unittest.TestCase):
 
-    @patch('builtins.open', mock_open(read_data=json.dumps({"valid_key": "valid_value"})))
-    @patch.object(ConfigLoader, '_validate_config')
+class TestConfigLoader(unittest.TestCase):
+    @patch(
+        "builtins.open", mock_open(read_data=json.dumps({"valid_key": "valid_value"}))
+    )
+    @patch.object(ConfigLoader, "_validate_config")
     def test_load_config(self, mock_validate_config):
         # Create a ConfigLoader instance
         config_loader = ConfigLoader()
@@ -15,10 +21,12 @@ class TestConfigLoader(unittest.TestCase):
         config = config_loader.load_config()
 
         # Assertions
-        self.assertEqual(config, {"valid_key": "valid_value"})  # Ensure the config is returned correctly
+        self.assertEqual(
+            config, {"valid_key": "valid_value"}
+        )  # Ensure the config is returned correctly
         mock_validate_config.assert_called_once()  # Ensure _validate_config was called
-        
-    @patch('builtins.open', mock_open(read_data='{"valid_key": "valid_value"}'))
+
+    @patch("builtins.open", mock_open(read_data='{"valid_key": "valid_value"}'))
     def test_read_config_from_file_valid(self):
         # Create a ConfigLoader instance
         config_loader = ConfigLoader()
@@ -27,7 +35,9 @@ class TestConfigLoader(unittest.TestCase):
         config = config_loader._read_config_from_file()
 
         # Assertions
-        self.assertEqual(config, {"valid_key": "valid_value"})  # Ensure the config is read correctly
+        self.assertEqual(
+            config, {"valid_key": "valid_value"}
+        )  # Ensure the config is read correctly
 
     def test_validate_config_sample(self):
         # Sample config data
@@ -39,20 +49,20 @@ class TestConfigLoader(unittest.TestCase):
                 "thursday": [["08:00", "10:00"], ["16:30", "19:00"]],
                 "friday": [["08:00", "10:00"], ["16:30", "19:00"]],
                 "saturday": [["10:00", "14:00"], ["18:00", "23:00"]],
-                "sunday": [["18:00", "23:00"]]
+                "sunday": [["18:00", "23:00"]],
             },
             "fare_chart": {
                 "green,green": {"peak": 2, "non_peak": 1},
                 "red,red": {"peak": 3, "non_peak": 2},
                 "green,red": {"peak": 4, "non_peak": 3},
-                "red,green": {"peak": 3, "non_peak": 2}
+                "red,green": {"peak": 3, "non_peak": 2},
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
                 "red,red": {"daily": 12, "weekly": 70},
                 "green,red": {"daily": 15, "weekly": 90},
-                "red,green": {"daily": 15, "weekly": 90}
-            }
+                "red,green": {"daily": 15, "weekly": 90},
+            },
         }
 
         # Create a ConfigLoader instance
@@ -74,7 +84,7 @@ class TestConfigLoader(unittest.TestCase):
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
                 "red,red": {"daily": 12, "weekly": 70},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -101,14 +111,14 @@ class TestConfigLoader(unittest.TestCase):
                 "green,green": {"peak": 2, "non_peak": 1},
                 "red,red": {"peak": 3, "non_peak": 2},
                 "green,red": {"peak": 4, "non_peak": 3},
-                "red,green": {"peak": 3, "non_peak": 2}
+                "red,green": {"peak": 3, "non_peak": 2},
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
                 "red,red": {"daily": 12, "weekly": 70},
                 "green,red": {"daily": 15, "weekly": 90},
-                "red,green": {"daily": 15, "weekly": 90}
-            }
+                "red,green": {"daily": 15, "weekly": 90},
+            },
         }
 
         # Create a ConfigLoader instance
@@ -127,7 +137,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
 
         # Missing 'cap_chart' key
@@ -138,7 +148,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "fare_chart": {
                 "green,green": {"peak": 2, "non_peak": 1},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -165,7 +175,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -187,7 +197,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": "55"},  # 'weekly' should be int
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -208,7 +218,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -241,7 +251,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -262,7 +272,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
 
         # Create a ConfigLoader instance
@@ -271,7 +281,6 @@ class TestConfigLoader(unittest.TestCase):
         # Test invalid time format
         with self.assertRaises(InvalidStructureError):
             config_loader._validate_config(invalid_time_format_config)
-
 
     def test_validate_time_format_edge_cases(self):
         valid_edge_cases = ["00:00", "23:59", "01:30", "12:01"]
@@ -292,7 +301,7 @@ class TestConfigLoader(unittest.TestCase):
             "cap_chart": {
                 "green,green!": {"daily": 8, "weekly": 55},
                 "red-red": {"daily": 12, "weekly": 70},
-            }
+            },
         }
         config_loader = ConfigLoader()
 
@@ -309,7 +318,7 @@ class TestConfigLoader(unittest.TestCase):
             "cap_chart": {
                 "green,green!": {"daily": 8, "weekly": "55"},
                 "red-red": {"daily": 12, "weekly": "seventy"},
-            }
+            },
         }
         config_loader = ConfigLoader()
 
@@ -326,7 +335,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
         config_loader = ConfigLoader()
 
@@ -343,7 +352,7 @@ class TestConfigLoader(unittest.TestCase):
             },
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": 55},
-            }
+            },
         }
         config_loader = ConfigLoader()
 
@@ -359,12 +368,13 @@ class TestConfigLoader(unittest.TestCase):
             "cap_chart": {
                 "green,green": {"daily": 8, "weekly": "invalid"},
                 "red-red": {"daily": -12, "weekly": 70},
-            }
+            },
         }
         config_loader = ConfigLoader()
 
         with self.assertRaises(InvalidStructureError):
             config_loader._validate_config(invalid_values_charts)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

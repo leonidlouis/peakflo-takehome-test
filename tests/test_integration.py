@@ -54,9 +54,8 @@ class TestIntegration(unittest.TestCase):
                 command = [
                     "python3",
                     "main.py",
-                    "--config-filepath=tests/test_config.json",
+                    "--config-filepath=tests/data/test_config.json",
                     f"--filepath={test_case['filepath']}",
-                    "--skip-tests",
                     "--log-level=CRITICAL",
                 ]
                 self.run_script_and_assert(

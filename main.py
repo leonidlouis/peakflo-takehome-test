@@ -1,14 +1,15 @@
-import csv
-import os
 import argparse
+import csv
 import logging
-import subprocess
-import inspect
+import os
 import sys
 from datetime import datetime
+
 from config_loader import ConfigLoader
 from constants import DATE_FORMAT, LOG_FORMAT
 from fare_system import PeakHoursChecker, UserJourneyTracker, FareCalculator, FareCap
+from settings import BASE_DIR
+from utils import resolve_path
 
 # Setting up logging
 logging.basicConfig(level=logging.CRITICAL, format=LOG_FORMAT)
@@ -30,7 +31,8 @@ def read_csv(file_path, valid_line_combinations):
     """Read the input CSV file and return the list of journeys."""
     try:
         logging.info(f"Attempting to read CSV from {file_path}.")
-        with open(file_path, mode="r") as file:
+        absolute_path = resolve_path(file_path)
+        with open(absolute_path, mode="r") as file:
             csv_reader = csv.reader(file)
             header = next(csv_reader)  # Extract header
 
@@ -88,7 +90,7 @@ def parse_args():
     parser.add_argument(
         "--filepath",
         type=str,
-        default="data/target.csv",
+        default=os.path.join(BASE_DIR, "data/target.csv"),
         help="Path to the input CSV file",
     )
     parser.add_argument(
@@ -101,7 +103,7 @@ def parse_args():
     parser.add_argument(
         "--config-filepath",
         type=str,
-        default="config.json",
+        default=os.path.join(BASE_DIR, "config.json"),
         help="Path to the configuration file",
     )
     parser.add_argument(
@@ -112,24 +114,36 @@ def parse_args():
     parser.add_argument(
         "--log-dir",
         type=str,
-        default="logs",
+        default=os.path.join(BASE_DIR, "logs"),
         help="Directory to save the log file. Default is 'logs' directory.",
     )
-    parser.add_argument("--skip-tests", action="store_true", help="Skip running tests")
 
     args = parser.parse_args()
 
     # Check if the script was run without any arguments, then activate interactive mode
     if len(sys.argv) == 1:
+        # Displaying only the filename for better user experience
+        default_csv_display = os.path.basename(args.filepath)
+        default_config_display = os.path.basename(args.config_filepath)
+        default_logdir_display = os.path.basename(args.log_dir)
+
         print("Interactive mode activated. Please input the required information.")
+        input_filepath = input(
+            f"Path to the input CSV file (default: {default_csv_display}): "
+        ).strip()
         args.filepath = (
-            input(f"Path to the input CSV file (default: {args.filepath}): ")
-            or args.filepath
+            resolve_path(input_filepath) if input_filepath else args.filepath
         )
+
+        input_config_filepath = input(
+            f"Path to the configuration file (default: {default_config_display}): "
+        ).strip()
         args.config_filepath = (
-            input(f"Path to the configuration file (default: {args.config_filepath}): ")
-            or args.config_filepath
+            resolve_path(input_config_filepath)
+            if input_config_filepath
+            else args.config_filepath
         )
+
         args.log_level = (
             input(f"Set the logging level (default: {args.log_level}): ")
             or args.log_level
@@ -144,11 +158,12 @@ def parse_args():
         )
 
         if args.write_log is True:
+            input_log_dir = input(
+                f"Directory to save the log file (default: {default_logdir_display}): "
+            ).strip()
             args.log_dir = (
-                input(f"Directory to save the log file (default: {args.log_dir}): ")
-                or args.log_dir
+                resolve_path(input_log_dir) if input_log_dir else args.log_dir
             )
-        # args.skip_tests = True if input(f"Skip running tests (True/False) (default: {args.skip_tests}): ").lower() == 'true' else args.skip_tests
 
     return args
 
@@ -163,18 +178,14 @@ def configure_log(log_level, write_log=False, log_dir="logs"):
     if not isinstance(numeric_log_level, int):
         raise ValueError(f"Invalid log level: {log_level}")
 
-    # Get the directory of the calling script (your test script)
-    caller_dir = os.path.dirname(
-        os.path.abspath(inspect.getfile(inspect.currentframe()))
-    )
-
     # Configure logger
     logger = logging.getLogger()
     logger.setLevel(numeric_log_level)
 
     # If write-log flag is set, add file handler to write logs to a file
     if write_log:
-        log_folder = os.path.join(caller_dir, log_dir)
+        log_folder = resolve_path(log_dir)
+
         os.makedirs(log_folder, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -192,23 +203,6 @@ def main():
     args = parse_args()
     configure_log(args.log_level, args.write_log, args.log_dir)
 
-    if not args.skip_tests:
-        test_result = subprocess.run(
-            ["python3", "-m", "unittest", "discover", "tests"],
-            capture_output=True,
-            text=True,
-        )
-
-        if test_result.returncode != 0:
-            logging.critical(
-                "Tests failed. Please fix the issues before running the main logic."
-            )
-            captured_output = (
-                test_result.stdout if test_result.stdout else test_result.stderr
-            )
-            logging.critical(f"Test output:\n{captured_output}")
-            exit(1)
-
     try:
         config_loader = ConfigLoader(args.config_filepath)
         config = config_loader.load_config()
@@ -219,7 +213,7 @@ def main():
         print(f"Total Fare: ${total_fare}")
     except Exception as e:
         logging.critical(f"An error occurred: {str(e)}")
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

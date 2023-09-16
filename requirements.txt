@@ -1,3 +1,4 @@
 black==23.9.1
 pre-commit==3.4.0
 coverage==7.3.1
+pyinstaller==5.13.2

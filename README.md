@@ -71,7 +71,6 @@ The application supports a range of arguments for flexibility:
 - `--write-log`: Flag to enable writing logs to a file in the custom directory (default: `False`).
 - `--log-dir`: Specify the directory where log files should be saved (default: `logs`).
 - `--config-filepath`: Specify a path to the configuration file (default: `config.json`).
-- `--skip-tests`: Use this flag to skip running tests, not intended to be used, originally for `tests/test_integration.py`.
 
 
 Run the `main.py` script with the appropriate command line arguments.
@@ -98,10 +97,35 @@ Sample output when using the application:
 
 ![Image of output of application](assets/sample-result-from-app.png)
 
+### Building the Executable
+If you want to create an executable for your specific platform, you can use PyInstaller. Here are the steps:
+1. Build the executable.
+```bash
+pyinstaller --onefile main.py
+```
+2. Locate the generated executable in the `dist` directory.
+```bashs
+cd dist
+```
+3. On Linux, you might have to set the file as executable (TODO: Find out the behaviour of this for Windows and MacOS).
+```bash
+chmod +x main
+```
+Now you have an executable that you can run on your specific platform. 
+
+Running the executable looks like this:
+![Image of output of executable](assets/sample-result-from-app-executable.png)
+
+Note: 
+1. `pyinstaller` **cannot cross-compile**, as in, if you generate the executable on Linux, it will **only** run on that specific platform, vice versa for MacOS and Windows.
+2. Both relative path and absolute path is supported when entering file / directory paths on the executable.
+
 ## Tests
 [Click Here](https://app.codecov.io/gh/leonidlouis/peakflo-takehome-test) to see the latest coverage report.
 
-Unit & integration tests are provided in `tests` directory. Whenever `main.py` is called through the command line, it will first execute these tests before calculating the fare. Application will exit if there's an error in the test.
+Unit & integration tests are provided in `tests` directory. It is automatically run when:
+1. The `pre-commit` hook for `git commit` will trigger the test.
+2. Whenever there's a `push` or `pull request` to the `master` branch. (automated via Github Actions)
 ### Running Tests Separately
 You can run unit tests independently with:
 ```bash

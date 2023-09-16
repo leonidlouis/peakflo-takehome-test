@@ -11,3 +11,7 @@ venv/
 
 # Coverage data file
 .coverage
+
+build/
+dist/
+main.spec

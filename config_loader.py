@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 from constants import TIME_FORMAT
+from utils import resolve_path
 
 
 class ConfigError(Exception):
@@ -29,8 +30,9 @@ class InvalidLineToLineCombinationError(ConfigError):
 
 
 class ConfigLoader:
-    def __init__(self, config_path="config.json"):
-        self.config_path = config_path
+    def __init__(self, config_path=None):
+        # Default to "config.json" in the BASE_DIR if not provided
+        self.config_path = config_path or resolve_path("config.json")
 
     def load_config(self):
         """Load and validate the configuration."""

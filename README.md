@@ -10,6 +10,7 @@ A fare calculation system for a fictional public transportation network.
 - Considers peak hours for fare adjustments.
 - Implements daily and weekly fare caps.
 - Reads and processes CSV files containing journey records.
+- **Interactive mode**: if no arguments are provided, the program will prompt the user for inputs interactively.
 
 ## Getting Started
 
@@ -55,6 +56,10 @@ python main.py
 While *it's possible* to skip steps 2 through 6, it's **not recommended**. Doing so would utilize your system's global `python3` environment, which might lead to potential conflicts with other projects or libraries. Following all the steps ensures you are working in a clean, isolated environment specific to this project.
 
 ## Usage
+### Interactive Mode
+
+If no command-line arguments are provided, the program will operate in interactive mode, prompting the user for inputs step-by-step.
+
 ### Command Line Arguments
 The application supports a range of arguments for flexibility:
 - `--filepath`: Specify a path to your input CSV file (default: `data/target.csv`).
@@ -62,7 +67,9 @@ The application supports a range of arguments for flexibility:
   - `CRITICAL`(default): This will write to the console only application-breaking logs.
   - `INFO`: This will write to the console basic information regarding the application.
   - `NONE`: This will not write anything, anywhere, and suppress logging.
-  - `DEBUG`: This will write to the console and logfile in `logs` directory highly granular/detailed information regarding the application.
+  - `DEBUG`: This will write to the console highly granular/detailed information regarding the application.
+- `--write-log`: Flag to enable writing logs to a file in the custom directory (default: `False`).
+- `--log-dir`: Specify the directory where log files should be saved (default: `logs`).
 - `--config-filepath`: Specify a path to the configuration file (default: `config.json`).
 - `--skip-tests`: Use this flag to skip running tests, not intended to be used, originally for `tests/test_integration.py`.
 
@@ -82,9 +89,9 @@ python main.py --filepath=data/custom_user_file.csv
 ```bash
 python main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json
 ```
-4. Running script to calculate custom user file: `data/custom_user_file.csv` with `custom_line_config.json` with granular/detailed logs (log will be outputted to `logs` directory)
+4. Running script to calculate custom user file: `data/custom_user_file.csv` with `custom_line_config.json` with granular/detailed logs, and write that log to a logfile in the `logs` directory
 ```bash
-python main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json --log-level=DEBUG
+python main.py --filepath=data/custom_user_file.csv --config-filepath=custom_line_config.json --log-level=DEBUG --write-log --log-dir=logs
 ```
 
 Sample output when using the application:

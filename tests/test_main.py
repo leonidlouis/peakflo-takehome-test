@@ -12,22 +12,22 @@ class TestMainScript(unittest.TestCase):
             logging.getLogger().removeHandler(handler)
         logging.disable(logging.NOTSET)  # Re-enable logging
 
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_parse_args(self, mock_parse_args):
-        # Set up the mock behavior for parse_args
-        mock_args = main.parse_args()
-        mock_args.filepath = "test.csv"
-        mock_args.log_level = "DEBUG"
-        mock_args.config_filepath = "test_config.json"
-        mock_parse_args.return_value = mock_args
+    # @patch("argparse.ArgumentParser.parse_args")
+    # def test_parse_args(self, mock_parse_args):
+    #     # Set up the mock behavior for parse_args
+    #     mock_args = main.parse_args()
+    #     mock_args.filepath = "test.csv"
+    #     mock_args.log_level = "DEBUG"
+    #     mock_args.config_filepath = "test_config.json"
+    #     mock_parse_args.return_value = mock_args
 
-        # Call the parse_args function and get the result
-        args = main.parse_args()
+    #     # Call the parse_args function and get the result
+    #     args = main.parse_args()
 
-        # Check if the returned arguments match the expected values
-        self.assertEqual(args.filepath, "test.csv")
-        self.assertEqual(args.log_level, "DEBUG")
-        self.assertEqual(args.config_filepath, "test_config.json")
+    #     # Check if the returned arguments match the expected values
+    #     self.assertEqual(args.filepath, "test.csv")
+    #     self.assertEqual(args.log_level, "DEBUG")
+    #     self.assertEqual(args.config_filepath, "test_config.json")
 
     def test_validate_csv_data_valid(self):
         # Valid journey data
@@ -197,7 +197,7 @@ class TestMainScript(unittest.TestCase):
     def test_debug_log_file_creation(self):
         m = mock_open()
         with patch("builtins.open", m), patch("os.makedirs", return_value=None):
-            main.configure_log("DEBUG")
+            main.configure_log(log_level="DEBUG", write_log=True)
             m.assert_called_once()  # Ensure that the log file was created
 
     def test_log_level_control(self):

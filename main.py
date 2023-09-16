@@ -4,6 +4,7 @@ import argparse
 import logging
 import subprocess
 import inspect
+import sys
 from datetime import datetime
 from config_loader import ConfigLoader
 from constants import DATE_FORMAT, LOG_FORMAT
@@ -103,11 +104,56 @@ def parse_args():
         default="config.json",
         help="Path to the configuration file",
     )
+    parser.add_argument(
+        "--write-log",
+        action="store_true",
+        help="If set, log output to a file. Otherwise, logs are output to the console.",
+    )
+    parser.add_argument(
+        "--log-dir",
+        type=str,
+        default="logs",
+        help="Directory to save the log file. Default is 'logs' directory.",
+    )
     parser.add_argument("--skip-tests", action="store_true", help="Skip running tests")
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    # Check if the script was run without any arguments, then activate interactive mode
+    if len(sys.argv) == 1:
+        print("Interactive mode activated. Please input the required information.")
+        args.filepath = (
+            input(f"Path to the input CSV file (default: {args.filepath}): ")
+            or args.filepath
+        )
+        args.config_filepath = (
+            input(f"Path to the configuration file (default: {args.config_filepath}): ")
+            or args.config_filepath
+        )
+        args.log_level = (
+            input(f"Set the logging level (default: {args.log_level}): ")
+            or args.log_level
+        )
+        args.write_log = (
+            True
+            if input(
+                f"If set, log output to a file (True/False) (default: {args.write_log}): "
+            ).lower()
+            == "true"
+            else args.write_log
+        )
+
+        if args.write_log is True:
+            args.log_dir = (
+                input(f"Directory to save the log file (default: {args.log_dir}): ")
+                or args.log_dir
+            )
+        # args.skip_tests = True if input(f"Skip running tests (True/False) (default: {args.skip_tests}): ").lower() == 'true' else args.skip_tests
+
+    return args
 
 
-def configure_log(log_level):
+def configure_log(log_level, write_log=False, log_dir="logs"):
     """Configure logging for application, level and behaviour is modifiable by user args"""
     if log_level == "NONE":
         logging.disable(logging.CRITICAL + 1)  # Disable all logging
@@ -126,11 +172,9 @@ def configure_log(log_level):
     logger = logging.getLogger()
     logger.setLevel(numeric_log_level)
 
-    # If log level is DEBUG, add file handler to write logs to a file
-    if log_level.upper() == "DEBUG":
-        log_folder = os.path.join(
-            caller_dir, "logs"
-        )  # Create the log folder in the caller's directory
+    # If write-log flag is set, add file handler to write logs to a file
+    if write_log:
+        log_folder = os.path.join(caller_dir, log_dir)
         os.makedirs(log_folder, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -146,7 +190,7 @@ def configure_log(log_level):
 def main():
     """Main application logic."""
     args = parse_args()
-    configure_log(args.log_level)
+    configure_log(args.log_level, args.write_log, args.log_dir)
 
     if not args.skip_tests:
         test_result = subprocess.run(
